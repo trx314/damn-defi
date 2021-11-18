@@ -1,20 +1,24 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../DamnValuableToken.sol";
 
 /**
- * @notice A simple pool to get flash loans of DVT
+ * @title FlashLoanerPool
+ * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
+
+ * @dev A simple pool to get flash loans of DVT
  */
 contract FlashLoanerPool is ReentrancyGuard {
-    using Address for address payable;
 
-    DamnValuableToken public liquidityToken;
+    using Address for address;
 
-    constructor(address liquidityTokenAddress) public {
+    DamnValuableToken public immutable liquidityToken;
+
+    constructor(address liquidityTokenAddress) {
         liquidityToken = DamnValuableToken(liquidityTokenAddress);
     }
 
@@ -22,21 +26,17 @@ contract FlashLoanerPool is ReentrancyGuard {
         uint256 balanceBefore = liquidityToken.balanceOf(address(this));
         require(amount <= balanceBefore, "Not enough token balance");
 
-        require(
-            msg.sender.isContract(),
-            "Borrower must be a deployed contract"
-        );
-
+        require(msg.sender.isContract(), "Borrower must be a deployed contract");
+        
         liquidityToken.transfer(msg.sender, amount);
 
-        (bool success, ) = msg.sender.call(
-            abi.encodeWithSignature("receiveFlashLoan(uint256)", amount)
+        msg.sender.functionCall(
+            abi.encodeWithSignature(
+                "receiveFlashLoan(uint256)",
+                amount
+            )
         );
-        require(success, "External call failed");
 
-        require(
-            liquidityToken.balanceOf(address(this)) >= balanceBefore,
-            "Flash loan not paid back"
-        );
+        require(liquidityToken.balanceOf(address(this)) >= balanceBefore, "Flash loan not paid back");
     }
 }
