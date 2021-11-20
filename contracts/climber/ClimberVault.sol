@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@zeppelinupgradeable/contracts/proxy/utils/Initializable.sol";
+import "@zeppelinupgradeable/contracts/access/OwnableUpgradeable.sol";
+import "@zeppelinupgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./ClimberTimelock.sol";

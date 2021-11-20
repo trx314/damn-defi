@@ -1,0 +1,5 @@
+{
+    "solidity.remappings": ["@gnosis/=/users/fadumoali/.brownie/packages/gnosis/safe-contracts@1.3.0",
+                            "@openzeppelin=/users/fadumoali/.brownie/packages/OpenZeppelin/openzeppelin-contracts@4.3.3",
+                            "@zeppelinupgradeable=/Users/fadumoali/.brownie/packages/OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2"]
+}

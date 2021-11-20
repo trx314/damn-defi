@@ -1,6 +1,8 @@
 dependencies:
   # - <organisation/repo>@<version>
   - OpenZeppelin/openzeppelin-contracts@4.3.3
+  - OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2
+  - gnosis/safe-contracts@1.3.0
 
 compiler:
   solc:
@@ -9,6 +11,8 @@ compiler:
       runs: 800
     remappings:
       - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.3'
+      - '@gnosis=gnosis/safe-contracts@1.3.0'
+      - '@zeppelinupgradeable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2'
     
 
 networks:
