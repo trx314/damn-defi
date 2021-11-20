@@ -1,13 +1,18 @@
 dependencies:
   # - <organisation/repo>@<version>
-  - OpenZeppelin/openzeppelin-contracts@3.4.2
+  - OpenZeppelin/openzeppelin-contracts@4.3.3
 
 compiler:
   solc:
+    optimizer:
+      enabled: true
+      runs: 800
     remappings:
-      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@3.4.2'
+      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.3'
+    
 
 networks:
   development:
     cmd_settings:
       default_balance: 100000
+  

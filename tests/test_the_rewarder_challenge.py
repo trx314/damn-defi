@@ -64,6 +64,7 @@ def before():
 def run_exploit():
     # remove pass and add exploit code here
     # attacker = accounts[5] - account to be used for exploit
+    # Tip: You will need to use Chain in your solution
     pass
 
 

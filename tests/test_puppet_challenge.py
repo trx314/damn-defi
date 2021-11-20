@@ -4,16 +4,18 @@ from brownie import (
     DamnValuableToken,
     PuppetPool,
 )
+from brownie.convert.datatypes import Wei
 from brownie.network.state import Chain
 from decimal import *
+from toolz.itertoolz import unique
 from web3 import Web3
 import json
 
 # Uniswap exchange will start with 10 DVT and 10 ETH in liquidity
 UNISWAP_INITIAL_TOKEN_RESERVE = Web3.toWei("10", "ether")
 UNISWAP_INITIAL_ETH_RESERVE = Web3.toWei("10", "ether")
-POOL_INITIAL_TOKEN_BALANCE = Web3.toWei("10000", "ether")
-ATTACKER_INITAL_TOKEN_BALANCE = Web3.toWei("100", "ether")
+POOL_INITIAL_TOKEN_BALANCE = Web3.toWei("100000", "ether")
+ATTACKER_INITAL_TOKEN_BALANCE = Web3.toWei("1000", "ether")
 
 ONE_ETH_IN_WEI = Web3.toWei("1", "ether")
 
@@ -29,8 +31,8 @@ def before():
 
     factory.initializeFactory(exchange_template.address, {"from": deployer})
     exchange_address = factory.createExchange(token.address, {"from": deployer})
-
-    dvt_uniswap_exchange = Contract(
+    global dvt_uniswap_exchange
+    dvt_uniswap_exchange = Contract.from_abi(
         "DVTUniswapExchange",
         exchange_address.events["NewExchange"]["exchange"],
         exchange_template.abi,
@@ -44,6 +46,7 @@ def before():
     )
 
     chain = Chain()
+    global deadline
     deadline = chain[-1].timestamp * 2
 
     dvt_uniswap_exchange.addLiquidity(
@@ -63,7 +66,7 @@ def before():
     token.transfer(attacker, ATTACKER_INITAL_TOKEN_BALANCE, {"from": deployer})
     token.transfer(lending_pool.address, POOL_INITIAL_TOKEN_BALANCE, {"from": deployer})
 
-    assert lending_pool.computeOraclePrice() == 1
+    assert lending_pool.calculateDepositRequired(1) == 2
 
     global initial_attacker_eth_balance
     initial_attacker_eth_balance = attacker.balance()
@@ -83,15 +86,16 @@ def calculate_token_to_eth_input_price(
 
 
 def deploy_uniswap_contract(file_name):
-    with open("build-uniswap-v1\\" + file_name + ".json") as json_file:
+    # NOTE; If you are on windows change the file structure accordingly... '\\'
+    with open("build-uniswap-v1/" + file_name + ".json") as json_file:
         data = json.load(json_file)
         abi = data["abi"]
-        bytecode = data["bytecode"]
+        bytecode = data["evm"]["bytecode"]["object"]
 
     # deploys contract
     tx = accounts[0].transfer(data=bytecode)
     return Contract.from_abi(file_name, tx.contract_address, abi)
-
+    
 
 def run_exploit():
     # remove pass and add exploit code here
@@ -105,8 +109,6 @@ def after():
         DamnValuableToken[0].balanceOf(attacker.address) >= POOL_INITIAL_TOKEN_BALANCE
     )
     assert DamnValuableToken[-1].balanceOf(PuppetPool[-1].address) == 0
-    assert attacker.balance() >= initial_attacker_eth_balance
-
 
 def test_puppet_challenge():
     before()
