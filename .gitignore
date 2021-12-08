@@ -7,3 +7,6 @@ reports/
 node_modules/
 solutions/
 package-lock.json
+scripts/
+.vscode/settings.json
+.DS_Store/
