@@ -3,7 +3,7 @@ dependencies:
   - OpenZeppelin/openzeppelin-contracts@4.3.3
   - OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2
   - gnosis/safe-contracts@1.3.0
-  - curiousdweller/v2-periphery@1.2.0
+  - curiousdweller/v2-periphery@1.2.1
   - Uniswap/v2-core@1.0.1
 
 compiler:
@@ -15,7 +15,7 @@ compiler:
       - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.3'
       - '@gnosis=gnosis/safe-contracts@1.3.0'
       - '@zeppelinupgradeable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.3.2'
-      - '@uniperiphery=curiousdweller/v2-periphery@1.2.0'
+      - '@uniperiphery=curiousdweller/v2-periphery@1.2.1'
       - '@uniswap=Uniswap/v2-core@1.0.1'
     
 
