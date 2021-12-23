@@ -1,8 +1,6 @@
-from hashlib import new
 from pathlib import Path
-from brownie import ZERO_ADDRESS, accounts, WalletRegistry, DamnValuableToken, project, Wei, GnosisWalletAttack
+from brownie import ZERO_ADDRESS, accounts, WalletRegistry, DamnValuableToken, project, Wei
 import eth_account
-from eth_account.messages import encode_defunct
 
 
 def test_backdoor():
@@ -27,7 +25,7 @@ def before():
     
     global wallet_users
     wallet_users = [accounts[0], accounts[1], accounts[2], accounts[3]]
-    gnosis_package_path = Path(Path.home()/ ".brownie" /"packages"/"gnosis"/"safe-contracts@1.3.0")
+    gnosis_package_path = Path(Path.home()/ ".brownie" /"packages"/"curiousdweller"/"safe-contracts@1.3.0")
     # Load the gnosis contracts for use
     global Gnosis
     Gnosis = project.load(gnosis_package_path)
@@ -56,5 +54,5 @@ def exploit():
     pass
 
 def after():
-    assert DamnValuableToken[-1].balanceOf(ATTACKER) >= Wei("39 ether")
+    assert DamnValuableToken[-1].balanceOf(ATTACKER) >= Wei("40 ether")
     
