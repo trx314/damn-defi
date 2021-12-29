@@ -17,7 +17,7 @@ def before():
     print(f"attacker address: {new_account.address}, private key: {attacker_key}")
     global ATTACKER
     # Creating new account,you can access the priv key of this account
-    # using the ATTACKER object if you need to.
+    # using the ATTACKER object if you need to (hint: not necessary to solve)
     ATTACKER = accounts.add(attacker_key)
     new_account = accounts.add()
      
@@ -54,5 +54,5 @@ def exploit():
     pass
 
 def after():
-    assert DamnValuableToken[-1].balanceOf(ATTACKER) >= Wei("40 ether")
+    assert DamnValuableToken[-1].balanceOf(ATTACKER) >= Wei("39 ether")
     

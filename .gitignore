@@ -8,3 +8,4 @@ node_modules/
 solutions/
 package-lock.json
 scripts/
+contracts/attacker-contracts
