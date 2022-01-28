@@ -26,7 +26,7 @@ contract UnstoppableLender is ReentrancyGuard {
     function depositTokens(uint256 amount) external nonReentrant {
         require(amount > 0, "Must deposit at least one token");
         // Transfer token from sender. Sender must have first approved them.
-        damnValuableToken.transferFrom(msg.sender, address(this), amount);
+        damnValuableToken.transferFrom(msg.sender, address(this), amount); // note: should not be done before the poolBalance update
         poolBalance = poolBalance + amount;
     }
 

